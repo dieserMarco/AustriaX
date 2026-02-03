@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mitgliederverwaltung</title>
+    <link rel="stylesheet" href="members.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="page__header">
+        <div>
+          <p class="eyebrow">Feuerwehr Verwaltungssoftware</p>
+          <h1>Mitgliederverwaltung</h1>
+          <p class="subtitle">
+            Übersicht, Kontaktliste und Aktivitätsstatus der Mitglieder.
+          </p>
+        </div>
+        <div class="header__stats">
+          <div class="stat">
+            <span class="stat__label">Mitglieder</span>
+            <span id="memberCount" class="stat__value">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat__label">Aktiv</span>
+            <span id="activeCount" class="stat__value">0</span>
+          </div>
+        </div>
+      </header>
+
+      <section class="card">
+        <div class="card__header">
+          <h2>Neues Mitglied anlegen</h2>
+          <p>Fülle die Stammdaten und Kontaktdetails aus.</p>
+        </div>
+        <form id="memberForm" class="form">
+          <div class="form__grid">
+            <label>
+              Vor- und Nachname
+              <input name="name" type="text" placeholder="Max Mustermann" required />
+            </label>
+            <label>
+              Rolle
+              <input name="role" type="text" placeholder="Atemschutzträger" required />
+            </label>
+            <label>
+              Telefon
+              <input name="phone" type="tel" placeholder="+43 123 456 789" required />
+            </label>
+            <label>
+              E-Mail
+              <input name="email" type="email" placeholder="max@feuerwehr.at" required />
+            </label>
+            <label>
+              Letzter Einsatz
+              <input name="lastDeployment" type="date" required />
+            </label>
+            <label>
+              Status
+              <select name="status" required>
+                <option value="aktiv">Aktiv</option>
+                <option value="inaktiv">Inaktiv</option>
+                <option value="krank">Krank</option>
+                <option value="urlaub">Urlaub</option>
+              </select>
+            </label>
+            <label class="form__span">
+              Qualifikationen
+              <input
+                name="skills"
+                type="text"
+                placeholder="Atemschutz, Maschinist, Erste Hilfe"
+              />
+            </label>
+          </div>
+          <button type="submit" class="button">Mitglied speichern</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="card__header card__header--inline">
+          <div>
+            <h2>Mitgliederübersicht</h2>
+            <p>Filtere nach Status oder suche nach Namen.</p>
+          </div>
+          <div class="filters">
+            <label>
+              Status
+              <select id="statusFilter">
+                <option value="alle">Alle</option>
+                <option value="aktiv">Aktiv</option>
+                <option value="inaktiv">Inaktiv</option>
+                <option value="krank">Krank</option>
+                <option value="urlaub">Urlaub</option>
+              </select>
+            </label>
+            <label>
+              Suche
+              <input id="searchInput" type="search" placeholder="Name oder Rolle" />
+            </label>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Rolle</th>
+                <th>Kontakt</th>
+                <th>Qualifikationen</th>
+                <th>Letzter Einsatz</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="memberTable"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="members.js"></script>
+  </body>
+</html>
