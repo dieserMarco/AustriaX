@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Verkehrsleitfaden – Maßnahmen & Akt Generator</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin:0; background:#0b1020; color:#e8ecff; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 18px; }
+    h1 { font-size: 20px; margin: 0 0 12px; }
+    h2 { font-size: 15px; margin: 0 0 10px; opacity: .95; }
+    .card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); border-radius: 14px; padding: 14px; margin: 12px 0; }
+    .grid { display:grid; grid-template-columns: repeat(12, 1fr); gap: 10px; }
+    .col-12{ grid-column: span 12; } .col-6{ grid-column: span 6; } .col-4{ grid-column: span 4; } .col-3{ grid-column: span 3; } .col-2{ grid-column: span 2; }
+    @media (max-width: 920px){
+      .col-6,.col-4,.col-3,.col-2{ grid-column: span 12; }
+    }
+    label{ display:block; font-size: 12px; opacity:.9; margin-bottom: 6px; }
+    input, select, textarea{
+      width:100%; box-sizing:border-box; padding: 10px 12px;
+      border-radius: 10px; border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.25); color:#e8ecff;
+    }
+    textarea{ min-height: 320px; resize: vertical; }
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .btn{ cursor:pointer; border:1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.10); color:#e8ecff; padding: 10px 12px; border-radius: 12px; }
+    .btn:hover{ background: rgba(255,255,255,0.16); }
+    .pill{ display:inline-flex; gap:8px; align-items:center; padding: 7px 10px; border-radius:999px; background: rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.14); font-size: 12px; }
+    .muted{ opacity:.8; font-size: 12px; }
+    .small{ font-size:12px; opacity:.85; }
+    .checkgrid{ display:grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    @media (max-width: 920px){ .checkgrid{ grid-template-columns: 1fr; } }
+    .check{ display:flex; gap:8px; align-items:flex-start; padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.10); background: rgba(0,0,0,0.18); }
+    .check input{ width:18px; height:18px; margin-top:2px; }
+    .sep{ height:1px; background: rgba(255,255,255,0.10); margin: 10px 0; }
+    code{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Maßnahmen & Polizeiakt Generator (Speed + KFG/Typisierung)</h1>
+
+  <div class="card">
+    <h2>1) Dienst / Kopf</h2>
+    <div class="grid">
+      <div class="col-3">
+        <label>Ort (z.B. Wien)</label>
+        <input id="headCity" placeholder="Wien" />
+      </div>
+      <div class="col-3">
+        <label>Datum (Akt) – TT.MM.JJJJ</label>
+        <input id="headDate" placeholder="16.04.2024" />
+      </div>
+      <div class="col-3">
+        <label>Bearbeiter (Nachname, Vorname)</label>
+        <input id="bearbeiterName" placeholder="KLEINMANN, Marco" />
+      </div>
+      <div class="col-3">
+        <label>Dienstgrad</label>
+        <input id="dienstgrad" placeholder="Chefinspektor" />
+      </div>
+
+      <div class="col-6">
+        <label>Abteilung / Dienststelle</label>
+        <input id="abteilung" placeholder="Landesverkehrsabteilung Wien, Rossauer Kaserne" />
+      </div>
+      <div class="col-3">
+        <label>Dienstnummer</label>
+        <input id="dienstnummer" placeholder="905" />
+      </div>
+      <div class="col-3">
+        <label>Eingesetzte Einsatzmittel</label>
+        <input id="einsatzmittel" placeholder="Adler-5" />
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>2) Vorfall / Messung</h2>
+    <div class="grid">
+      <div class="col-4">
+        <label>Vorfallsdatum – TT.MM.JJJJ</label>
+        <input id="vorfallDate" placeholder="16.04.2024" />
+      </div>
+      <div class="col-4">
+        <label>Vorfallsuhrzeit – HH:MM</label>
+        <input id="vorfallTime" placeholder="10:45" />
+      </div>
+      <div class="col-4">
+        <label>Vorfallsort (Freitext)</label>
+        <input id="vorfallOrt" placeholder="Ostautobahn RF Wien" />
+      </div>
+
+      <div class="col-4">
+        <label>Straßentyp</label>
+        <select id="streetType">
+          <option value="ort">Ortsgebiet</option>
+          <option value="land">Landes-/Bundesstraße</option>
+          <option value="auto" selected>Autobahn/Autostraße</option>
+        </select>
+      </div>
+
+      <div class="col-4">
+        <label>Erlaubte Geschwindigkeit (km/h)</label>
+        <input id="limit" type="number" min="0" step="1" />
+        <div class="small muted">Standardwerte lt. Leitfaden werden automatisch gesetzt (du kannst überschreiben). :contentReference[oaicite:2]{index=2}</div>
+      </div>
+
+      <div class="col-4">
+        <label>Gemessene Geschwindigkeit (km/h)</label>
+        <input id="measured" type="number" min="0" step="1" placeholder="216" />
+      </div>
+
+      <div class="col-6">
+        <label>Fahrzeug (Marke/Modell)</label>
+        <input id="vehicle" placeholder="Yamaha R6" />
+      </div>
+      <div class="col-3">
+        <label>Kennzeichen</label>
+        <input id="plate" placeholder="W-83773Y" />
+      </div>
+      <div class="col-3">
+        <label>Zulassungsbesitzer (ZLB)</label>
+        <input id="zlb" placeholder="Jan HALLMEN" />
+      </div>
+
+      <div class="col-12">
+        <div class="row">
+          <label class="pill"><input id="ffwn" type="checkbox" style="width:auto;">Ausnahme: FF Wiener Neustadt (Einrückung)</label>
+          <span class="muted small">Dann gelten die Ausnahme-Grenzen. :contentReference[oaicite:3]{index=3}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>3) Zusatztatbestände (optional)</h2>
+    <div class="checkgrid">
+      <div class="check">
+        <input type="checkbox" id="kfg57aMissing" />
+        <div>
+          <div><b>§57a KFG – keine gültige Begutachtung</b></div>
+          <div class="small muted">Optional: Kennzeichenabnahme / Weiterfahrt untersagen (je nach Praxis/Anordnung).</div>
+        </div>
+      </div>
+
+      <div class="check">
+        <input type="checkbox" id="typMissing" />
+        <div>
+          <div><b>Fehlende Typisierung</b></div>
+          <div class="small muted">Strafdrohung lt. Gesetz: € 5.000,- :contentReference[oaicite:4]{index=4}</div>
+        </div>
+      </div>
+
+      <div class="check">
+        <input type="checkbox" id="typWrong" />
+        <div>
+          <div><b>Fehlerhafte Typisierung</b></div>
+          <div class="small muted">Strafdrohung lt. Gesetz: € 3.000,- :contentReference[oaicite:5]{index=5}</div>
+        </div>
+      </div>
+
+      <div class="check">
+        <input type="checkbox" id="noCoop" />
+        <div>
+          <div><b>Nichtmitwirken bei Amtshandlung</b></div>
+          <div class="small muted">Möglich: FS-Sperre / Weiterfahrt untersagen / Verwahrung bis 24h :contentReference[oaicite:6]{index=6}</div>
+        </div>
+      </div>
+
+      <div class="check">
+        <input type="checkbox" id="tuningProhibited" />
+        <div>
+          <div><b>Verdacht verbotener Umbau</b></div>
+          <div class="small muted">Wähle Details unten (Beispiele). :contentReference[oaicite:7]{index=7}</div>
+        </div>
+      </div>
+
+      <div class="check">
+        <input type="checkbox" id="plateRemoval" />
+        <div>
+          <div><b>Kennzeichenabnahme</b></div>
+          <div class="small muted">Wenn du das setzen willst (z.B. wegen §57a / technischer Unzulässigkeit).</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <label>Verbotene Umbauten (Mehrfachauswahl – falls relevant)</label>
+      <select id="prohibitedList" multiple size="7">
+        <option>Unterbodenbeleuchtung</option>
+        <option>Scheinwerferfarbe unzulässig (vorn nicht weiß / hinten nicht rot)</option>
+        <option>Kennzeichenfarbe unzulässig (nicht weiß/schwarz-dunkelblau)</option>
+        <option>Umbauten verdecken Kennzeichen (teilweise/komplett)</option>
+        <option>Umbauten schränken Sicht nach vorne ein</option>
+        <option>Vom Fahrzeug abstehende Umbauten</option>
+        <option>Umbauten ohne feste Verbindung</option>
+      </select>
+      <div class="small muted">Auswahlhilfe aus §11 (nicht vollständig). :contentReference[oaicite:8]{index=8}</div>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="grid">
+      <div class="col-6">
+        <label>Auswertung Radarsystem (Dateiname/Notiz)</label>
+        <input id="radarImg" placeholder="image.png" />
+      </div>
+      <div class="col-6">
+        <label>Position der Auslösung (Dateiname/Notiz)</label>
+        <input id="posImg" placeholder="image.png" />
+      </div>
+      <div class="col-12">
+        <label>Zusätzliche Notizen (optional)</label>
+        <input id="notes" placeholder="z.B. fixer Radar, Messstelle, Sichtverhältnisse, etc." />
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <button class="btn" id="btnGenerate">Polizeiakt generieren</button>
+      <button class="btn" id="btnCopy">Akt kopieren</button>
+      <span id="status" class="small muted"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <label>Ausgabe (Polizeiakt)</label>
+    <textarea id="output" placeholder="Hier erscheint der generierte Akt..."></textarea>
+    <div class="small muted" style="margin-top:8px;">
+      Schwellen/Logik lt. Verkehrsleitfaden (FS-Abnahme/Verwahrung/Ausnahme) :contentReference[oaicite:9]{index=9} und Typisierung/Tuning lt. Gesetz :contentReference[oaicite:10]{index=10}.
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // Standard-Limits lt. Verkehrsleitfaden (Art. 1) :contentReference[oaicite:11]{index=11}
+  const LIMITS = { ort: 80, land: 100, auto: 130 };
+
+  // FS-Abnahme-Schwellen lt. Leitfaden (Art. 2.1) :contentReference[oaicite:12]{index=12}
+  const FS_ABNAHME = { ort: 120, land: 150, auto: 180 };
+
+  // Fahrzeugverwahrung-Schwellen lt. Leitfaden (Art. 2.2) :contentReference[oaicite:13]{index=13}
+  const VERWAHRUNG = { ort: 140, land: 170, auto: 200 };
+
+  // Ausnahme FF Wiener Neustadt (Art. 2.4) :contentReference[oaicite:14]{index=14}
+  const FF_WN_MAX = { ort: 100, land: 130, auto: 200 };
+
+  // Typisierung/Tuning Strafen (Tuning- und Typisierungsgesetz §12) :contentReference[oaicite:15]{index=15}
+  const TYP_FINE = { missing: 5000, wrong: 3000 };
+
+  const $ = (id) => document.getElementById(id);
+  const num = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  function fmtEuro(n){
+    return "€ " + Number(n).toLocaleString("de-AT") + ",-";
+  }
+
+  function setDefaultLimit(){
+    const t = $("streetType").value;
+    if (!$("limit").dataset.touched) $("limit").value = LIMITS[t];
+  }
+
+  function onTouchLimit(){
+    $("limit").dataset.touched = "1";
+  }
+
+  function streetLabel(t){
+    return t === "ort" ? "Ortsgebiet" : (t === "land" ? "Landes-/Bundesstraße" : "Autobahn/Autostraße");
+  }
+
+  function buildSpeedMeasures(t, limit, measured, ffwn){
+    const delta = measured - limit;
+    const fsThr = FS_ABNAHME[t];
+    const towThr = VERWAHRUNG[t];
+
+    const ffMax = FF_WN_MAX[t];
+    const ffWithin = ffwn && measured <= ffMax;
+
+    const measures = {
+      delta,
+      osV: false,
+      fs: { needed:false, hours:0, text:"" },
+      tow: { needed:false, hours:0, text:"" },
+      notes: []
+    };
+
+    if (ffWithin){
+      measures.notes.push("Ausnahme FF Wiener Neustadt (Einrückung): Geschwindigkeit im Ausnahmebereich – Maßnahmen aus Geschwindigkeit sind als Einzelfall zu würdigen.");
+      return measures;
+    }
+
+    if (delta <= 0){
+      measures.notes.push("Keine Geschwindigkeitsübertretung.");
+      return measures;
+    }
+
+    measures.osV = true;
+
+    // Leitfaden: FS-Abnahme 24h, Verwahrung 24h (Grundfall) :contentReference[oaicite:16]{index=16}
+    if (measured >= towThr){
+      measures.fs = { needed:true, hours:24, text:"Führerschein für 24 Stunden zu entziehen (abzunehmen) und zu sperren." };
+      measures.tow = { needed:true, hours:24, text:"Fahrzeug für 24 Stunden sicherzustellen/zu verwahren (Verwahrung)." };
+      measures.notes.push(`Schwellen erreicht: FS-Abnahme ab ${fsThr} km/h, Verwahrung ab ${towThr} km/h (Straßentyp: ${streetLabel(t)}).`);
+      return measures;
+    }
+
+    if (measured >= fsThr){
+      measures.fs = { needed:true, hours:24, text:"Führerschein für 24 Stunden zu entziehen (abzunehmen) und zu sperren." };
+      measures.notes.push(`Schwelle erreicht: FS-Abnahme ab ${fsThr} km/h (Straßentyp: ${streetLabel(t)}).`);
+      measures.notes.push("Hinweis Leitfaden: erneute Anhaltung innerhalb 24h → 72h; innerhalb 72h erneut → 1 Woche (jeweils OSV erneut).");
+      return measures;
+    }
+
+    measures.notes.push("Übertretung unterhalb der FS-Abnahme-/Verwahrungsschwellen → OSV/Anzeige je nach Vorgabe.");
+    return measures;
+  }
+
+  function buildSubjectLines(speedMeasures){
+    const lines = [];
+
+    // §20 StVO immer wenn delta>0
+    if (speedMeasures.delta > 0){
+      // " >60 km/h" style
+      const more60 = speedMeasures.delta > 60;
+      lines.push(`§20 Geschwindigkeitsübertretung${more60 ? " >60 km/h" : ""}`);
+    }
+
+    if ($("kfg57aMissing").checked) lines.push("§ 57a KFG - Wiederkehrende Begutachtung");
+    if ($("typMissing").checked) lines.push("Keine Typisierung");
+    if ($("typWrong").checked) lines.push("Fehlerhafte Typisierung");
+    if ($("tuningProhibited").checked) lines.push("Verdacht verbotener Umbau");
+    if ($("noCoop").checked) lines.push("Nichtmitwirken bei Amtshandlung");
+
+    return lines;
+  }
+
+  function buildTechBlock(){
+    const lines = [];
+    const kfg = $("kfg57aMissing").checked;
+    const plateRemoval = $("plateRemoval").checked;
+
+    if (kfg){
+      lines.push("Des Weiteren liegt zum Tatzeitpunkt keine gültige §57a-Überprüfung vor.");
+      if (plateRemoval){
+        lines.push("Infolgedessen sind die Kennzeichen des oben genannten Fahrzeugs abzunehmen (Kennzeichenabnahme) und die Weiterfahrt erforderlichenfalls zu untersagen.");
+      } else {
+        lines.push("Hinweis: je nach Praxis/Anordnung sind Maßnahmen (z.B. Weiterfahrt untersagen / Kennzeichenabnahme) zu prüfen.");
+      }
+    }
+
+    const typMissing = $("typMissing").checked;
+    const typWrong = $("typWrong").checked;
+    const tunProh = $("tuningProhibited").checked;
+    const noCoop = $("noCoop").checked;
+
+    if (typWrong){
+      lines.push(`Fehlerhafte Typisierung: Es ist eine Geldstrafe in Höhe von ${fmtEuro(TYP_FINE.wrong)} vorgesehen.`);
+    }
+    if (typMissing){
+      lines.push(`Fehlende Typisierung: Es ist eine Geldstrafe in Höhe von ${fmtEuro(TYP_FINE.missing)} vorgesehen.`);
+    }
+    if (tunProh){
+      const selected = Array.from($("prohibitedList").selectedOptions).map(o => o.value);
+      if (selected.length){
+        lines.push("Verdacht verbotener Umbau(e): " + selected.join("; ") + ".");
+      } else {
+        lines.push("Verdacht verbotener Umbau(e): (keine Details angeführt).");
+      }
+    }
+    if (noCoop){
+      lines.push("Aufgrund des Nichtmitwirkens bei der Amtshandlung sind Maßnahmen lt. Gesetz (FS-Sperre, Weiterfahrt untersagen, Verwahrung bis 24h) zu prüfen.");
+    }
+
+    if ($("plateRemoval").checked && !kfg){
+      lines.push("Kennzeichenabnahme wurde angeordnet (Begründung siehe Sachverhalt/Notizen).");
+    }
+
+    return lines;
+  }
+
+  function generate(){
+    // Kopf
+    const headCity = ($("headCity").value || "").trim();
+    const headDate = ($("headDate").value || "").trim();
+    const bearbeiterName = ($("bearbeiterName").value || "").trim();
+    const dienstgrad = ($("dienstgrad").value || "").trim();
+    const abteilung = ($("abteilung").value || "").trim();
+    const dienstnummer = ($("dienstnummer").value || "").trim();
+    const einsatzmittel = ($("einsatzmittel").value || "").trim();
+
+    // Vorfall
+    const vorfallDate = ($("vorfallDate").value || "").trim();
+    const vorfallTime = ($("vorfallTime").value || "").trim();
+    const vorfallOrt = ($("vorfallOrt").value || "").trim();
+
+    const t = $("streetType").value;
+    const limit = num($("limit").value);
+    const measured = num($("measured").value);
+    const ffwn = $("ffwn").checked;
+
+    const vehicle = ($("vehicle").value || "").trim();
+    const plate = ($("plate").value || "").trim();
+    const zlb = ($("zlb").value || "").trim();
+
+    const radarImg = ($("radarImg").value || "").trim();
+    const posImg = ($("posImg").value || "").trim();
+    const notes = ($("notes").value || "").trim();
+
+    if (limit === null || measured === null){
+      $("output").value = "Bitte erlaubte und gemessene Geschwindigkeit als Zahl eingeben.";
+      return;
+    }
+
+    const speed = buildSpeedMeasures(t, limit, measured, ffwn);
+    const subj = buildSubjectLines(speed);
+
+    // Maßnahmen-Text (klar: X Stunden)
+    let measureLines = [];
+    if (speed.delta > 0 && !($("ffwn").checked && measured <= FF_WN_MAX[t])){
+      if (speed.fs.needed){
+        measureLines.push(`Dem Beschuldigten ist aufgrund des Geschwindigkeitsüberschreitens der Führerschein für ${speed.fs.hours} Stunden zu entziehen (abzunehmen) und zu sperren.`);
+      }
+      if (speed.tow.needed){
+        measureLines.push(`Außerdem wird das oben genannte Fahrzeug für ${speed.tow.hours} Stunden sichergestellt und verwahrt.`);
+        // In deinem Beispiel: Auslösesumme 5000 – das ist nicht immer fix; daher als Feld/optional weggelassen.
+      }
+      if (!speed.fs.needed && !speed.tow.needed){
+        measureLines.push("Aufgrund der Geschwindigkeitsübertretung ist eine Organstrafverfügung (OSV) auszustellen bzw. Anzeige zu erstatten (keine FS-Abnahme/Verwahrung aus Geschwindigkeit).");
+      }
+    } else if (speed.delta <= 0){
+      measureLines.push("Keine Maßnahmen aus Geschwindigkeit erforderlich.");
+    } else {
+      measureLines.push("Maßnahmen aus Geschwindigkeit sind aufgrund der Ausnahme (FF Wiener Neustadt) als Einzelfall zu würdigen.");
+    }
+
+    // Technik/Typisierung Block
+    const techLines = buildTechBlock();
+
+    // Akt bauen (ähnlich Beispiel)
+    const out = [];
+    if (headCity || headDate){
+      out.push(`${headCity || "—"}, am ${headDate || "—"}`);
+    } else {
+      out.push("—");
+    }
+
+    const bearb = [bearbeiterName, dienstgrad].filter(Boolean).join(", ");
+    out.push(`Bearbeiter: ${bearb || "—"}${dienstnummer ? " (Dienstnummer: " + dienstnummer + ")" : ""}`);
+
+    if (abteilung) out.push(abteilung);
+    if (einsatzmittel) out.push(`Eingesetzte Einsatzmittel: ${einsatzmittel}`);
+    out.push("");
+
+    out.push("Betreff:");
+    if (subj.length){
+      subj.forEach((s, i) => {
+        // optisch eingerückt wie im Beispiel
+        out.push((i === 0 ? "       " : "                   ") + s);
+      });
+    } else {
+      out.push("       —");
+    }
+    out.push("");
+
+    out.push(`Vorfallszeit: ${vorfallDate || "—"}`);
+    out.push(`Vorfallsort: ${vorfallOrt || "—"}`);
+    out.push("");
+
+    // Sachverhalt
+    const whenStr = `${vorfallDate || "—"}${vorfallTime ? " um ca " + vorfallTime + " Uhr" : ""}`;
+    const vehStr = `${vehicle || "Fahrzeug"}${plate ? ", Amtl. Kennz. " + plate : ""}${zlb ? " (ZLB: " + zlb + ")" : ""}`;
+
+    out.push(`Der Besch. wurde am ${whenStr} mit ${vehStr} auf der ${vorfallOrt || "—"} von einem Radarsystem erfasst.`);
+    out.push("");
+    out.push(`Erlaubte Geschwindigkeit: ${limit} km/h`);
+    out.push(`Gemessene Geschwindigkeit: ${measured} km/h`);
+    out.push("");
+    out.push(`Übertretung von: ${Math.max(0, speed.delta)} km/h`);
+    out.push("");
+
+    // Maßnahmenblock
+    measureLines.forEach(l => out.push(l));
+    if (techLines.length){
+      out.push("");
+      techLines.forEach(l => out.push(l));
+    }
+
+    if (notes){
+      out.push("");
+      out.push("Notizen:");
+      out.push(notes);
+    }
+
+    out.push("");
+    out.push("Auswertung des Radarsystems:");
+    out.push(radarImg || "—");
+    out.push("");
+    out.push("Genaue Position der Auslösung des Radarsystems:");
+    out.push(posImg || "—");
+    out.push("");
+    out.push("Gezeichnet,");
+    out.push(`${dienstgrad ? dienstgrad + " " : ""}${bearbeiterName || "—"}`);
+
+    $("output").value = out.join("\n");
+    $("status").textContent = "Akt aktualisiert.";
+    setTimeout(() => $("status").textContent = "", 1200);
+  }
+
+  async function copyOut(){
+    const text = $("output").value || "";
+    if (!text.trim()){
+      $("status").textContent = "Nichts zum Kopieren.";
+      return;
+    }
+    try{
+      await navigator.clipboard.writeText(text);
+      $("status").textContent = "Kopiert ✅";
+      setTimeout(()=> $("status").textContent = "", 1200);
+    }catch(e){
+      $("status").textContent = "Kopieren nicht erlaubt – bitte manuell markieren & kopieren.";
+    }
+  }
+
+  // Events
+  $("streetType").addEventListener("change", () => { setDefaultLimit(); generate(); });
+  $("limit").addEventListener("input", () => { onTouchLimit(); generate(); });
+  $("measured").addEventListener("input", generate);
+  $("ffwn").addEventListener("change", generate);
+
+  [
+    "headCity","headDate","bearbeiterName","dienstgrad","abteilung","dienstnummer","einsatzmittel",
+    "vorfallDate","vorfallTime","vorfallOrt","vehicle","plate","zlb","radarImg","posImg","notes",
+    "kfg57aMissing","typMissing","typWrong","noCoop","tuningProhibited","plateRemoval","prohibitedList"
+  ].forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    el.addEventListener("input", generate);
+    el.addEventListener("change", generate);
+  });
+
+  $("btnGenerate").addEventListener("click", generate);
+  $("btnCopy").addEventListener("click", copyOut);
+
+  // Init
+  setDefaultLimit();
+  // Prefill mit heutiger Systemzeit (optional)
+  // Du kannst es auch leer lassen – ich setze nur wenn leer:
+  const d = new Date();
+  const pad2 = (n) => String(n).padStart(2,"0");
+  const today = `${pad2(d.getDate())}.${pad2(d.getMonth()+1)}.${d.getFullYear()}`;
+  if (!$("headDate").value) $("headDate").value = today;
+  if (!$("vorfallDate").value) $("vorfallDate").value = today;
+  if (!$("radarImg").value) $("radarImg").value = "image.png";
+  if (!$("posImg").value) $("posImg").value = "image.png";
+
+  generate();
+})();
+</script>
+</body>
+</html>
