@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Fraktionen – Auswahl & Copy</title>
+  <style>
+    :root{
+      --bg:#0b0f17; --panel:#0f1726; --panel2:#101b2f; --text:#e7eefc; --muted:#9bb0d3;
+      --line:#1b2a46; --accent:#6aa6ff; --bad:#ff6a6a; --ok:#44d18a; --shadow:0 10px 30px rgba(0,0,0,.35);
+      --r:14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(1200px 700px at 20% 0%, #142446 0%, var(--bg) 60%);
+      color:var(--text);
+    }
+    .wrap{max-width:1200px; margin:22px auto; padding:0 16px 44px;}
+    header{display:flex; gap:12px; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; margin-bottom:12px}
+    h1{margin:0; font-size:22px}
+    .sub{color:var(--muted); font-size:13px; margin-top:6px}
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .hd{
+      padding:12px; border-bottom:1px solid var(--line);
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      background: rgba(0,0,0,.12);
+      flex-wrap:wrap;
+    }
+    .bd{padding:12px}
+    label{display:block; font-size:12px; color:var(--muted); margin:0 0 6px 2px}
+    input, select, textarea, button{
+      width:100%;
+      background: rgba(10,15,26,.7);
+      border:1px solid var(--line);
+      color:var(--text);
+      border-radius: 12px;
+      padding:10px;
+      outline:none;
+    }
+    button{
+      cursor:pointer;
+      background: linear-gradient(180deg, rgba(106,166,255,.25), rgba(106,166,255,.10));
+      border:1px solid rgba(106,166,255,.35);
+    }
+    button:hover{filter:brightness(1.08)}
+    .btn2{
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border:1px solid rgba(255,255,255,.14);
+    }
+    .btnBad{
+      background: linear-gradient(180deg, rgba(255,106,106,.22), rgba(255,106,106,.10));
+      border:1px solid rgba(255,106,106,.35);
+    }
+    .pill{
+      font-size:12px; color:var(--muted); padding:4px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.12); background: rgba(0,0,0,.15);
+      white-space:nowrap;
+    }
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end}
+    .row > *{flex:1}
+    .hr{height:1px; background:var(--line); margin:12px 0}
+
+    /* GRID 4 per row */
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap:10px;
+    }
+    @media (max-width: 1050px){ .grid{grid-template-columns: repeat(3, 1fr);} }
+    @media (max-width: 760px){ .grid{grid-template-columns: repeat(2, 1fr);} }
+    @media (max-width: 420px){ .grid{grid-template-columns: 1fr;} }
+
+    .tile{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.14);
+      border-radius: 16px;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      min-height: 220px;
+    }
+    .imgWrap{
+      position:relative;
+      aspect-ratio: 1.6 / 1;
+      background: rgba(255,255,255,.06);
+      border-bottom:1px solid rgba(255,255,255,.10);
+    }
+    .imgWrap img{
+      width:100%; height:100%; object-fit:cover; display:block;
+    }
+    .imgFallback{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--muted); font-size:12px;
+    }
+    .tileBody{padding:10px; display:flex; flex-direction:column; gap:8px; flex:1}
+    .name{font-weight:700; font-size:13px; line-height:1.2}
+    .meta{display:flex; gap:6px; flex-wrap:wrap}
+    .meta .pill{padding:3px 8px; font-size:11px}
+    .qtyRow{display:flex; gap:8px; align-items:center; margin-top:auto}
+    .qtyRow button{
+      width:42px; height:42px; padding:0; border-radius: 12px;
+      font-weight:900;
+    }
+    .qtyRow input{
+      text-align:center;
+      height:42px;
+      padding:8px;
+      font-weight:700;
+    }
+
+    textarea{min-height:140px; resize:vertical}
+
+    .toast{
+      position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+      background: rgba(15,23,38,.92); border:1px solid rgba(255,255,255,.14);
+      padding:10px 12px; border-radius: 999px; box-shadow: var(--shadow);
+      color: var(--text); font-size: 13px; display:none;
+    }
+    .small{font-size:12px; color:var(--muted)}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Fraktionen – Auswahl & Copy</h1>
+      <div class="sub">
+        Direkt aus Google CSV. Grid (4 pro Reihe). Menge wählen → unten Text generieren & kopieren.
+      </div>
+    </div>
+    <div class="row" style="min-width:320px; max-width:720px;">
+      <div style="flex:1.6">
+        <label>CSV URL</label>
+        <input id="csvUrl" />
+      </div>
+      <div style="flex:.8">
+        <label>Bild-Pfad (relativ)</label>
+        <input id="imgBase" />
+      </div>
+      <div style="flex:.6">
+        <label>&nbsp;</label>
+        <button id="btnReload">Neu laden</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="card">
+    <div class="hd">
+      <div class="row" style="width:100%; align-items:flex-end">
+        <div style="flex:1.2">
+          <label>Suche (Name / action)</label>
+          <input id="q" placeholder="z.B. medkit / propname …" />
+        </div>
+        <div style="flex:.7">
+          <label>Fraktion (type)</label>
+          <select id="typeFilter"></select>
+        </div>
+        <div style="flex:.6">
+          <label>Anzeige</label>
+          <span id="count" class="pill">0 Items</span>
+        </div>
+        <div style="flex:.6">
+          <label>&nbsp;</label>
+          <button id="btnClear" class="btnBad">Auswahl leeren</button>
+        </div>
+      </div>
+    </div>
+    <div class="bd">
+      <div id="tiles" class="grid"></div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <div style="flex:1">
+          <label>Text zum Schicken</label>
+          <textarea id="out" placeholder="Hier erscheint der Text…"></textarea>
+          <div class="small" style="margin-top:8px">
+            Format: <b>Menge × value (action)</b> — gruppiert nach <b>type</b>.
+          </div>
+        </div>
+        <div style="flex:.45; min-width:220px">
+          <label>&nbsp;</label>
+          <button id="btnBuild" class="btn2">Text generieren</button>
+          <div style="height:10px"></div>
+          <button id="btnCopy">Kopieren</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+(() => {
+  const CSV_URL =
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vSLP0Ab-WF6MtroB5Y4uOIoLZZaQuSMhtcK0dKFh1Y-0dmrBsn0lLaJn77gbg5cL2M1viWMkZ_jod3U/pub?gid=1331990270&single=true&output=csv";
+
+  const els = {
+    csvUrl: document.getElementById("csvUrl"),
+    imgBase: document.getElementById("imgBase"),
+    btnReload: document.getElementById("btnReload"),
+    q: document.getElementById("q"),
+    typeFilter: document.getElementById("typeFilter"),
+    count: document.getElementById("count"),
+    tiles: document.getElementById("tiles"),
+    btnBuild: document.getElementById("btnBuild"),
+    out: document.getElementById("out"),
+    btnCopy: document.getElementById("btnCopy"),
+    btnClear: document.getElementById("btnClear"),
+    toast: document.getElementById("toast"),
+  };
+
+  let items = [];                 // normalized items
+  let qtyByAction = {};           // { actionLower: qty }
+  let lastLoadedHash = "";
+
+  const norm = (s) => (s ?? "").toString().trim();
+  const toast = (msg) => {
+    els.toast.textContent = msg;
+    els.toast.style.display = "block";
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => els.toast.style.display = "none", 1700);
+  };
+
+  function escapeHtml(s){
+    return (s ?? "").toString()
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+  function escapeAttr(s){ return escapeHtml(s).replaceAll("`","&#096;"); }
+
+  // CSV parser
+  function parseCSV(text) {
+    const rows = [];
+    let row = [];
+    let cur = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i], n = text[i+1];
+      if (inQuotes) {
+        if (c === '"' && n === '"') { cur += '"'; i++; }
+        else if (c === '"') inQuotes = false;
+        else cur += c;
+      } else {
+        if (c === '"') inQuotes = true;
+        else if (c === ',') { row.push(cur); cur = ""; }
+        else if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = ""; }
+        else if (c === '\r') {}
+        else cur += c;
+      }
+    }
+    row.push(cur);
+    rows.push(row);
+    while (rows.length && rows[rows.length-1].every(v => norm(v) === "")) rows.pop();
+    return rows;
+  }
+
+  function rowsToObjects(rows) {
+    if (!rows.length) return [];
+    const header = rows[0].map(h => norm(h));
+    const objs = [];
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      const o = {};
+      for (let j = 0; j < header.length; j++) o[header[j]] = r[j] ?? "";
+      objs.push(o);
+    }
+    return objs;
+  }
+
+  function normalizeItems(objs) {
+    const out = [];
+    for (const o of objs) {
+      const value = norm(o.value);
+      const action = norm(o.action);
+      const type = norm(o.type) || "Unbekannt";
+      let image = norm(o.image);
+
+      // keep even without image
+      if (!value && !action) continue;
+
+      if (image && !image.toLowerCase().endsWith(".png")) image += ".png";
+
+      out.push({
+        type,
+        value: value || action,
+        action: action || value,
+        image
+      });
+    }
+
+    // de-dupe by action lower
+    const seen = new Set();
+    return out.filter(it => {
+      const k = (it.action || "").toLowerCase();
+      if (!k) return false;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  }
+
+  function getTypes() {
+    const set = new Set(items.map(i => i.type || "Unbekannt"));
+    return ["Alle", ...Array.from(set).sort((a,b)=>a.localeCompare(b,'de'))];
+  }
+
+  function renderTypeFilter() {
+    const types = getTypes();
+    const cur = els.typeFilter.value || "Alle";
+    els.typeFilter.innerHTML = types.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`).join("");
+    els.typeFilter.value = types.includes(cur) ? cur : "Alle";
+  }
+
+  function getFilteredItems() {
+    const q = norm(els.q.value).toLowerCase();
+    const tf = els.typeFilter.value || "Alle";
+    return items.filter(it => {
+      const okType = (tf === "Alle") || (it.type === tf);
+      const okQ = !q || it.value.toLowerCase().includes(q) || it.action.toLowerCase().includes(q);
+      return okType && okQ;
+    });
+  }
+
+  function getQty(action) {
+    const k = (action || "").toLowerCase();
+    return qtyByAction[k] || 0;
+  }
+  function setQty(action, qty) {
+    const k = (action || "").toLowerCase();
+    qtyByAction[k] = Math.max(0, Math.min(999, qty|0));
+    save();
+  }
+
+  function renderTiles() {
+    const list = getFilteredItems();
+    els.count.textContent = `${list.length} Items`;
+    const imgBase = norm(els.imgBase.value) || "./img/";
+
+    els.tiles.innerHTML = list.map(it => {
+      const q = getQty(it.action);
+      const imgUrl = it.image ? `${imgBase}${it.image}` : "";
+      const safeName = escapeHtml(it.value);
+      const safeType = escapeHtml(it.type);
+      const safeAction = escapeHtml(it.action);
+      const tileId = escapeAttr(it.action);
+
+      return `
+        <div class="tile" data-action="${tileId}">
+          <div class="imgWrap">
+            ${it.image ? `<img src="${escapeAttr(imgUrl)}" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ""}
+            <div class="imgFallback" style="display:${it.image ? "none" : "flex"}">kein Bild</div>
+          </div>
+          <div class="tileBody">
+            <div class="name">${safeName}</div>
+            <div class="meta">
+              <span class="pill">${safeType}</span>
+              <span class="pill">${safeAction}</span>
+            </div>
+            <div class="qtyRow">
+              <button class="btnBad" data-dec="${tileId}" title="-1">−</button>
+              <input data-qty="${tileId}" inputmode="numeric" value="${q}" />
+              <button data-inc="${tileId}" title="+1">+</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("") || `<div class="small">Keine Items gefunden.</div>`;
+
+    // bind events
+    els.tiles.querySelectorAll("[data-inc]").forEach(b => {
+      b.addEventListener("click", () => {
+        const a = b.getAttribute("data-inc");
+        setQty(a, getQty(a) + 1);
+        renderTiles();
+      });
+    });
+    els.tiles.querySelectorAll("[data-dec]").forEach(b => {
+      b.addEventListener("click", () => {
+        const a = b.getAttribute("data-dec");
+        setQty(a, Math.max(0, getQty(a) - 1));
+        renderTiles();
+      });
+    });
+    els.tiles.querySelectorAll("[data-qty]").forEach(inp => {
+      inp.addEventListener("change", () => {
+        const a = inp.getAttribute("data-qty");
+        const n = parseInt(inp.value || "0", 10);
+        setQty(a, isNaN(n) ? 0 : n);
+        renderTiles();
+      });
+    });
+  }
+
+  function buildText() {
+    const picked = items
+      .map(it => ({...it, qty: getQty(it.action)}))
+      .filter(it => it.qty > 0);
+
+    if (!picked.length) {
+      els.out.value = "";
+      toast("Nichts ausgewählt");
+      return;
+    }
+
+    // group by type
+    picked.sort((a,b)=>a.type.localeCompare(b.type,'de') || a.value.localeCompare(b.value,'de'));
+
+    const lines = [];
+    let lastType = null;
+    picked.forEach(it => {
+      if (it.type !== lastType) {
+        lines.push(`[${it.type}]`);
+        lastType = it.type;
+      }
+      lines.push(`- ${it.qty} × ${it.value} (${it.action})`);
+    });
+
+    els.out.value = lines.join("\n") + "\n";
+    toast("Text generiert");
+  }
+
+  async function copyOut() {
+    const t = els.out.value || "";
+    if (!t.trim()) { toast("Nichts zu kopieren"); return; }
+    try { await navigator.clipboard.writeText(t); toast("Kopiert ✅"); }
+    catch {
+      els.out.focus(); els.out.select();
+      document.execCommand("copy");
+      toast("Kopiert ✅");
+    }
+  }
+
+  function clearSelection() {
+    qtyByAction = {};
+    save();
+    renderTiles();
+    els.out.value = "";
+    toast("Auswahl geleert");
+  }
+
+  function save() {
+    localStorage.setItem("fraktionen_picker_v1", JSON.stringify({
+      csvUrl: els.csvUrl.value,
+      imgBase: els.imgBase.value,
+      qtyByAction
+    }));
+  }
+
+  function loadSaved() {
+    const raw = localStorage.getItem("fraktionen_picker_v1");
+    if (!raw) return false;
+    try {
+      const p = JSON.parse(raw);
+      els.csvUrl.value = p.csvUrl || CSV_URL;
+      els.imgBase.value = p.imgBase || "./img/";
+      qtyByAction = p.qtyByAction || {};
+      return true;
+    } catch { return false; }
+  }
+
+  async function loadCSV() {
+    const url = norm(els.csvUrl.value);
+    toast("Lade CSV…");
+    const res = await fetch(url, { method:"GET", mode:"cors", cache:"no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+
+    // simple hash: if unchanged, skip
+    const hash = String(text.length) + ":" + text.slice(0,50) + ":" + text.slice(-50);
+    if (hash === lastLoadedHash && items.length) { toast("CSV unverändert"); return; }
+    lastLoadedHash = hash;
+
+    const rows = parseCSV(text);
+    const objs = rowsToObjects(rows);
+    items = normalizeItems(objs);
+
+    renderTypeFilter();
+    renderTiles();
+    toast(`Geladen: ${items.length} Items`);
+  }
+
+  // init
+  const hadSaved = loadSaved();
+  if (!hadSaved) {
+    els.csvUrl.value = CSV_URL;
+    els.imgBase.value = "./img/";
+  }
+
+  els.btnReload.addEventListener("click", async () => {
+    try { await loadCSV(); }
+    catch (e) { console.error(e); toast("CSV konnte nicht geladen werden"); }
+  });
+  els.q.addEventListener("input", renderTiles);
+  els.typeFilter.addEventListener("change", renderTiles);
+  els.btnBuild.addEventListener("click", buildText);
+  els.btnCopy.addEventListener("click", copyOut);
+  els.btnClear.addEventListener("click", clearSelection);
+
+  // load directly
+  loadCSV().catch(e => { console.error(e); toast("CSV konnte nicht geladen werden"); });
+})();
+</script>
+</body>
+</html>
